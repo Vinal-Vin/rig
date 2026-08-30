@@ -2,9 +2,9 @@
 #
 # rig install.sh - macOS and WSL/Debian/Ubuntu Linux entry point.
 #
-# Installs: herdr, WezTerm (macOS only - see WSL note below), firstmate,
-# and the axi CLI suite (gh-axi, chrome-devtools-axi, lavish-axi, quota-axi,
-# tasks-axi, no-mistakes).
+# Installs: herdr, WezTerm (macOS only - see WSL note below), gh CLI
+# (a firstmate prerequisite), firstmate, and the axi CLI suite (gh-axi,
+# chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi, no-mistakes).
 #
 # Safe to re-run: every step checks whether the tool is already present
 # before installing it.

@@ -4,8 +4,9 @@
     rig install.ps1 - native Windows entry point.
 
 .DESCRIPTION
-    Installs: herdr, WezTerm, firstmate, and the axi CLI suite
-    (gh-axi, chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi, no-mistakes).
+    Installs: herdr, WezTerm, gh CLI (a firstmate prerequisite), firstmate,
+    and the axi CLI suite (gh-axi, chrome-devtools-axi, lavish-axi,
+    quota-axi, tasks-axi, no-mistakes).
 
     Safe to re-run: every step checks whether the tool is already present
     before installing it.
