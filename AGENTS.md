@@ -23,6 +23,11 @@ Every install step must stay idempotent (check before installing, skip with a
 message if already present) and fail loudly with an actionable message on a missing
 prerequisite (package manager, npm/Node, etc.) rather than half-completing silently.
 
+`configs/` holds the captain's live tool configs, placed by both installers (target
+paths in README.md). This repo is public: scrub secrets, emails, hostnames, and
+hardcoded user paths before committing a config, and keep the installers' rule of
+never overwriting an existing config on the target machine.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

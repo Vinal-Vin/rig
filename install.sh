@@ -4,10 +4,11 @@
 #
 # Installs: herdr, WezTerm (macOS only - see WSL note below), gh CLI
 # (a firstmate prerequisite), firstmate, and the axi CLI suite (gh-axi,
-# chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi, no-mistakes).
+# chrome-devtools-axi, lavish-axi, quota-axi, tasks-axi, no-mistakes),
+# then places the configs from configs/ (herdr everywhere, WezTerm on macOS).
 #
 # Safe to re-run: every step checks whether the tool is already present
-# before installing it.
+# before installing it, and an existing config is never overwritten.
 
 set -euo pipefail
 
@@ -20,6 +21,8 @@ warn() { printf '\033[1;33mwarn:\033[0m %s\n' "$*" >&2; }
 err()  { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; }
 fail() { err "$*"; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
+
+RIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 trap 'err "rig install.sh failed (line $LINENO). See output above for details."' ERR
 
@@ -156,6 +159,52 @@ install_axi_suite() {
 }
 
 # ---------------------------------------------------------------------------
+# config placement
+# ---------------------------------------------------------------------------
+
+# Copy a repo config to its target path, unless something is already there.
+# An existing, different config is left alone (never clobbered) with a warning.
+place_config() {
+  local src="$RIG_DIR/$1" dest="$2"
+  [[ -f "$src" ]] || fail "Config $src is missing from the repo checkout. Run install.sh from a full clone of rig."
+  if [[ -e "$dest" ]]; then
+    if cmp -s "$src" "$dest"; then
+      log "$dest already matches rig's $1; skipping."
+    else
+      warn "$dest already exists and differs from rig's $1; leaving it untouched."
+      warn "  To adopt rig's version: mv '$dest' '$dest.bak' and re-run install.sh."
+    fi
+    return
+  fi
+  log "Placing $1 at $dest..."
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+}
+
+install_configs() {
+  # Herdr reads ~/.config/herdr/config.toml on macOS and Linux, unless
+  # HERDR_CONFIG_PATH overrides it (https://herdr.dev/docs/configuration/).
+  place_config configs/herdr/config.toml "${HERDR_CONFIG_PATH:-$HOME/.config/herdr/config.toml}"
+
+  # WezTerm only runs on the host OS (see install_wezterm), so under WSL its
+  # config belongs on the Windows side - install.ps1 places it there.
+  if [[ "$PLATFORM" == "linux" ]]; then
+    log "Skipping WezTerm config here: install.ps1 places it at %USERPROFILE%\\.wezterm.lua on the Windows host."
+    return
+  fi
+  # WezTerm prefers ~/.config/wezterm/wezterm.lua over ~/.wezterm.lua, so a
+  # config there would shadow ours - don't add a second, ignored one.
+  local shadow
+  for shadow in "${XDG_CONFIG_HOME:-$HOME/.config}/wezterm/wezterm.lua" "$HOME/.config/wezterm/wezterm.lua"; do
+    if [[ -e "$shadow" ]]; then
+      warn "$shadow exists and takes precedence over ~/.wezterm.lua; leaving WezTerm config untouched."
+      return
+    fi
+  done
+  place_config configs/wezterm/.wezterm.lua "$HOME/.wezterm.lua"
+}
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -170,6 +219,7 @@ main() {
   install_firstmate
   install_no_mistakes
   install_axi_suite
+  install_configs
 
   log "All done. See README.md for the remaining manual steps (gh auth login, launching firstmate, and WezTerm on the Windows host if you're under WSL)."
 }

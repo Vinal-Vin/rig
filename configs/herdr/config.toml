@@ -1,0 +1,65 @@
+# herdr configuration
+# https://herdr.dev
+
+onboarding = false
+
+[theme]
+name = "dracula"
+auto_switch = false
+
+[terminal]
+# Empty means $SHELL, then /bin/sh.
+default_shell = ""
+shell_mode = "auto"
+# New panes/tabs/workspaces inherit the cwd of whatever spawned them.
+new_cwd = "follow"
+
+[keys]
+prefix = "ctrl+b"
+
+# Tabs
+new_tab = "prefix+c"
+rename_tab = "prefix+shift+t"
+previous_tab = "prefix+p"
+next_tab = "prefix+n"
+switch_tab = "prefix+1..9"
+close_tab = "prefix+shift+x"
+
+# Panes
+split_vertical = "prefix+v"
+split_horizontal = "prefix+minus"
+close_pane = "prefix+x"
+zoom = "prefix+z"
+resize_mode = "prefix+r"
+rename_pane = "prefix+shift+p"
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+cycle_pane_next = "prefix+tab"
+cycle_pane_previous = "prefix+shift+tab"
+
+# Workspaces
+new_workspace = "prefix+shift+n"
+rename_workspace = "prefix+shift+w"
+close_workspace = "prefix+shift+d"
+workspace_picker = "prefix+w"
+goto = "prefix+g"
+
+# Misc
+help = "prefix+?"
+settings = "prefix+s"
+detach = "prefix+q"
+reload_config = "prefix+shift+r"
+toggle_sidebar = "prefix+b"
+edit_scrollback = "prefix+e"
+
+[ui]
+show_agent_labels_on_pane_borders = true
+pane_borders = true
+pane_gaps = true
+pane_scrollbars = true
+hide_tab_bar_when_single_tab = false
+tab_bar_position = "top"
+confirm_close = true
+prompt_new_tab_name = true
