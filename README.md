@@ -1,7 +1,7 @@
 # rig
 
-Cross-platform setup for the captain's standard toolset: one script installs and
-configures everything, on macOS, WSL, or native Windows.
+Cross-platform setup for the captain's standard toolset: one script installs
+everything and places its configs, on macOS, WSL, or native Windows.
 
 ## What gets installed
 
@@ -16,6 +16,32 @@ configures everything, on macOS, WSL, or native Windows.
 
 Every step is idempotent - re-running the installer skips anything already present
 and says so, rather than reinstalling or erroring.
+
+## Configs
+
+After installing the tools, both scripts place the captain's configs from
+`configs/`:
+
+| Config | Repo file | macOS | WSL / Linux | Native Windows |
+|---|---|---|---|---|
+| herdr | `configs/herdr/config.toml` | `~/.config/herdr/config.toml` | `~/.config/herdr/config.toml` | `%APPDATA%\herdr\config.toml` |
+| WezTerm | `configs/wezterm/.wezterm.lua` | `~/.wezterm.lua` | skipped (placed on the Windows host by `install.ps1`) | `%USERPROFILE%\.wezterm.lua` |
+
+Target paths follow each tool's docs: herdr's
+[configuration page](https://herdr.dev/docs/configuration/) (a set
+`HERDR_CONFIG_PATH` is honored as the herdr target instead) and WezTerm's
+[config file lookup](https://wezterm.org/config/files.html).
+
+An existing config is never overwritten. If the target already matches rig's
+copy the step is skipped; if it differs, the installer leaves it alone and
+prints a warning with the command to move it aside (to `*.bak`) and re-run.
+The WezTerm step is also skipped if a `wezterm/wezterm.lua` exists under
+`$XDG_CONFIG_HOME` or `~/.config`, since WezTerm would load that one instead of
+`~/.wezterm.lua`.
+
+To update the repo copies after changing a config locally, copy the live file
+back over the one in `configs/` and commit it. This repo is public, so check
+the diff for secrets or machine-specific paths first.
 
 ## Running it
 
@@ -75,6 +101,8 @@ actionable message if a required package manager is missing (Homebrew on macOS,
 - `install.sh` - single entry point for macOS and WSL/Debian/Ubuntu Linux,
   auto-detecting which one it's running on.
 - `install.ps1` - single entry point for native Windows.
+- `configs/` - the herdr and WezTerm configs the installers place (see
+  [Configs](#configs)).
 
 Kept deliberately as two flat, readable scripts rather than a shared-library
 framework - each is small enough to read top to bottom.

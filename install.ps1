@@ -6,10 +6,11 @@
 .DESCRIPTION
     Installs: herdr, WezTerm, gh CLI (a firstmate prerequisite), firstmate,
     and the axi CLI suite (gh-axi, chrome-devtools-axi, lavish-axi,
-    quota-axi, tasks-axi, no-mistakes).
+    quota-axi, tasks-axi, no-mistakes), then places the herdr and WezTerm
+    configs from configs/.
 
     Safe to re-run: every step checks whether the tool is already present
-    before installing it.
+    before installing it, and an existing config is never overwritten.
 #>
 
 Set-StrictMode -Version Latest
@@ -130,6 +131,53 @@ function Install-AxiSuite {
 }
 
 # ---------------------------------------------------------------------------
+# config placement
+# ---------------------------------------------------------------------------
+
+# Copy a repo config to its target path, unless something is already there.
+# An existing, different config is left alone (never clobbered) with a warning.
+function Set-Config {
+    param([string]$RelPath, [string]$Dest)
+    $src = Join-Path $PSScriptRoot $RelPath
+    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
+        Fail "Config $src is missing from the repo checkout. Run install.ps1 from a full clone of rig."
+    }
+    if (Test-Path -LiteralPath $Dest) {
+        if ((Get-FileHash -LiteralPath $src).Hash -eq (Get-FileHash -LiteralPath $Dest).Hash) {
+            Write-Log "$Dest already matches rig's $RelPath; skipping."
+        }
+        else {
+            Write-Warn "$Dest already exists and differs from rig's $RelPath; leaving it untouched."
+            Write-Warn "  To adopt rig's version: Move-Item '$Dest' '$Dest.bak' and re-run install.ps1."
+        }
+        return
+    }
+    Write-Log "Placing $RelPath at $Dest..."
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dest) | Out-Null
+    Copy-Item -LiteralPath $src -Destination $Dest
+}
+
+function Install-Configs {
+    # Herdr reads %APPDATA%\herdr\config.toml on Windows, unless
+    # HERDR_CONFIG_PATH overrides it (https://herdr.dev/docs/configuration/).
+    $herdrConfig = if ($env:HERDR_CONFIG_PATH) { $env:HERDR_CONFIG_PATH } else { Join-Path $env:APPDATA 'herdr\config.toml' }
+    Set-Config 'configs\herdr\config.toml' $herdrConfig
+
+    # WezTerm prefers wezterm\wezterm.lua under XDG_CONFIG_HOME or ~\.config
+    # over ~\.wezterm.lua, so a config there would shadow ours - don't add a
+    # second, ignored one.
+    $shadows = @((Join-Path $HOME '.config\wezterm\wezterm.lua'))
+    if ($env:XDG_CONFIG_HOME) { $shadows += (Join-Path $env:XDG_CONFIG_HOME 'wezterm\wezterm.lua') }
+    foreach ($shadow in $shadows) {
+        if (Test-Path -LiteralPath $shadow) {
+            Write-Warn "$shadow exists and takes precedence over ~\.wezterm.lua; leaving WezTerm config untouched."
+            return
+        }
+    }
+    Set-Config 'configs\wezterm\.wezterm.lua' (Join-Path $env:USERPROFILE '.wezterm.lua')
+}
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -142,6 +190,7 @@ function Main {
     Install-Firstmate
     Install-NoMistakes
     Install-AxiSuite
+    Install-Configs
 
     Write-Log "All done. See README.md for the remaining manual steps (gh auth login, launching firstmate)."
 }
